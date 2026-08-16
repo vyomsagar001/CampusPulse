@@ -1,6 +1,7 @@
 require("dotenv").config();
 
 const express = require("express");
+const eventRoutes = require("./routes/eventRoutes");
 const connectDB = require("./db");
 const userRoutes = require("./routes/userRoutes");
 const clubRoutes = require("./routes/clubRoutes");
@@ -9,6 +10,7 @@ const app = express();
 app.use(express.json());
 app.use("/api/users", userRoutes);
 app.use("/api/clubs", clubRoutes);
+app.use("/api/events", eventRoutes);
 const PORT = process.env.PORT || 5000;
 
 connectDB();
