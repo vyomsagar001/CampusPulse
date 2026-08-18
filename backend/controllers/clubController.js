@@ -49,6 +49,25 @@ const createClub = async (req, res) => {
   }
 };
 
+
+const getAllClubs = async (req, res) => {
+  try {
+    const clubs = await Club.find().sort({ createdAt: -1 });
+
+    res.status(200).json({
+      clubs,
+    });
+  } catch (error) {
+    console.error("Get clubs error:", error);
+
+    res.status(500).json({
+      message: "Server error",
+    });
+  }
+};
+
+
 module.exports = {
   createClub,
+  getAllClubs,
 };
