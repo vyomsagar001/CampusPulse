@@ -3,7 +3,8 @@ import { SearchBar } from '@/components/ui/SearchBar';
 import { FilterBar, type FilterOption } from '@/components/ui/FilterBar';
 import { EventCard } from '@/components/EventCard';
 import { EmptyState, LoadingState, ErrorState } from '@/components/ui/States';
-import { mockEvents, mockClubs } from '@/data/mockData';
+import { eventsApi } from '@/api/events';
+import { clubsApi } from '@/api/clubs';
 import type { CampusEvent, Club, EventCategory, EventStatus } from '@/types';
 
 const categoryOptions: FilterOption[] = [
@@ -42,13 +43,28 @@ export function EventsPage() {
   });
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setEvents(mockEvents);
-      setClubs(mockClubs);
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      setError(false);
+
+      const [eventsData, clubsData] = await Promise.all([
+        eventsApi.getAll(),
+        clubsApi.getAll(),
+      ]);
+
+      setEvents(eventsData);
+      setClubs(clubsData);
+    } catch (error) {
+      console.error('Failed to load events:', error);
+      setError(true);
+    } finally {
       setLoading(false);
-    }, 400);
-    return () => clearTimeout(timer);
-  }, []);
+    }
+  };
+
+  loadData();
+}, []);
 
   const venueOptions = useMemo(
     () => Array.from(new Set(events.map((e) => e.venue))).map((v) => ({ value: v, label: v })),

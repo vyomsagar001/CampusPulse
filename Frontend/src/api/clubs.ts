@@ -1,10 +1,10 @@
 import type { Club } from '@/types';
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_URL = 'http://localhost:5000/api/clubs';
 
 export const clubsApi = {
   async getAll(): Promise<Club[]> {
-    const response = await fetch(`${API_BASE_URL}/clubs`);
+    const response = await fetch(API_URL);
 
     if (!response.ok) {
       throw new Error('Failed to fetch clubs');
@@ -12,11 +12,14 @@ export const clubsApi = {
 
     const data = await response.json();
 
-    return data.clubs;
+    return data.clubs.map((club: any) => ({
+      ...club,
+      id: club._id,
+    }));
   },
 
   async getById(id: string): Promise<Club | null> {
-    const response = await fetch(`${API_BASE_URL}/clubs/${id}`);
+    const response = await fetch(`${API_URL}/${id}`);
 
     if (response.status === 404) {
       return null;
@@ -28,20 +31,17 @@ export const clubsApi = {
 
     const data = await response.json();
 
-    return data.club;
+    return {
+      ...data.club,
+      id: data.club._id,
+    };
   },
 
   async getByAdminId(adminId: string): Promise<Club[]> {
-    const response = await fetch(
-      `${API_BASE_URL}/clubs/admin/${adminId}`
+    const clubs = await this.getAll();
+
+    return clubs.filter((club) =>
+      club.admins.includes(adminId)
     );
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch clubs');
-    }
-
-    const data = await response.json();
-
-    return data.clubs;
   },
 };

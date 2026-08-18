@@ -119,7 +119,45 @@ const createEvent = async (req, res) => {
     });
   }
 };
+const getEvents = async (req, res) => {
+  try {
+    const events = await Event.find().sort({ startDate: 1 });
 
+    res.status(200).json({
+      events,
+    });
+  } catch (error) {
+    console.error("Get events error:", error);
+
+    res.status(500).json({
+      message: "Server error",
+    });
+  }
+};
+
+const getEventById = async (req, res) => {
+  try {
+    const event = await Event.findById(req.params.id);
+
+    if (!event) {
+      return res.status(404).json({
+        message: "Event not found",
+      });
+    }
+
+    res.status(200).json({
+      event,
+    });
+  } catch (error) {
+    console.error("Get event error:", error);
+
+    res.status(500).json({
+      message: "Server error",
+    });
+  }
+};
 module.exports = {
   createEvent,
+  getEvents,
+  getEventById,
 };
