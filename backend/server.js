@@ -1,5 +1,6 @@
 require("dotenv").config();
 
+const cors = require("cors");
 const express = require("express");
 const eventRoutes = require("./routes/eventRoutes");
 const connectDB = require("./db");
@@ -7,6 +8,7 @@ const userRoutes = require("./routes/userRoutes");
 const clubRoutes = require("./routes/clubRoutes");
 const app = express();
 
+app.use(cors());
 app.use(express.json());
 app.use("/api/users", userRoutes);
 app.use("/api/clubs", clubRoutes);

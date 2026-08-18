@@ -3,7 +3,8 @@ import { SearchBar } from '@/components/ui/SearchBar';
 import { FilterBar, type FilterOption } from '@/components/ui/FilterBar';
 import { ClubCard } from '@/components/ClubCard';
 import { EmptyState, LoadingState } from '@/components/ui/States';
-import { mockClubs, mockEvents } from '@/data/mockData';
+import { mockEvents } from '@/data/mockData';
+import { clubsApi } from '@/api/clubs';
 import type { Club } from '@/types';
 
 export function ClubsPage() {
@@ -13,12 +14,19 @@ export function ClubsPage() {
   const [category, setCategory] = useState('');
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setClubs(mockClubs);
+  const loadClubs = async () => {
+    try {
+      const data = await clubsApi.getAll();
+      setClubs(data);
+    } catch (error) {
+      console.error('Failed to load clubs:', error);
+    } finally {
       setLoading(false);
-    }, 400);
-    return () => clearTimeout(timer);
-  }, []);
+    }
+  };
+
+  loadClubs();
+}, []);
 
   const categoryOptions: FilterOption[] = useMemo(
     () => Array.from(new Set(clubs.map((c) => c.category))).map((c) => ({ value: c, label: c })),
