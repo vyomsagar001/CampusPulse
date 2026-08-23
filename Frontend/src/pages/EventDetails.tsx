@@ -17,7 +17,8 @@ import { CategoryBadge, StatusBadge } from '@/components/ui/Badge';
 import { LoadingState, ErrorState, EmptyState } from '@/components/ui/States';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { useAuth } from '@/context/AuthContext';
-import { mockEvents, mockClubs, mockRegistrations } from '@/data/mockData';
+import { eventsApi } from '@/api/events';
+import { clubsApi } from '@/api/clubs';
 import { formatDate, formatTime, isRegistrationOpen } from '@/utils/format';
 import type { CampusEvent, Club, Registration } from '@/types';
 
@@ -32,19 +33,43 @@ export function EventDetailsPage() {
   const [registering, setRegistering] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [showCancel, setShowCancel] = useState(false);
+useEffect(() => {
+  const loadEvent = async () => {
+    try {
+      setLoading(true);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      const e = mockEvents.find((x) => x.id === id) ?? null;
-      setEvent(e);
-      setClub(e ? mockClubs.find((c) => c.id === e.club) ?? null : null);
-      setRegistration(
-        user ? mockRegistrations.find((r) => r.eventId === id && r.userId === user.id) ?? null : null,
-      );
+      if (!id) {
+        setEvent(null);
+        setClub(null);
+        return;
+      }
+
+      const [eventData, clubsData] = await Promise.all([
+        eventsApi.getById(id),
+        clubsApi.getAll(),
+      ]);
+
+      setEvent(eventData);
+
+      if (eventData) {
+        const eventClub =
+          clubsData.find((club) => club.id === eventData.club) ?? null;
+
+        setClub(eventClub);
+      } else {
+        setClub(null);
+      }
+    } catch (error) {
+      console.error('Failed to load event details:', error);
+      setEvent(null);
+      setClub(null);
+    } finally {
       setLoading(false);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [id, user]);
+    }
+  };
+
+  loadEvent();
+}, [id]);
 
   if (loading) return <LoadingState count={1} />;
   if (!event) {
