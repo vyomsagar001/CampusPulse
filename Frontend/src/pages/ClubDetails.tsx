@@ -14,7 +14,9 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { EventCard } from '@/components/EventCard';
 import { EmptyState, LoadingState } from '@/components/ui/States';
-import { mockClubs, mockEvents, mockUsers } from '@/data/mockData';
+import { mockUsers } from '@/data/mockData';
+import { clubsApi } from '@/api/clubs';
+import { eventsApi } from '@/api/events';
 import { formatDate } from '@/utils/format';
 import type { Club, CampusEvent } from '@/types';
 
@@ -24,14 +26,35 @@ export function ClubDetailsPage() {
   const [events, setEvents] = useState<CampusEvent[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setClub(mockClubs.find((c) => c.id === id) ?? null);
-      setEvents(mockEvents.filter((e) => e.club === id));
+useEffect(() => {
+  const loadClubDetails = async () => {
+    try {
+      setLoading(true);
+
+      if (!id) {
+        setClub(null);
+        setEvents([]);
+        return;
+      }
+
+      const [clubData, eventsData] = await Promise.all([
+        clubsApi.getById(id),
+        eventsApi.getByClubId(id),
+      ]);
+
+      setClub(clubData);
+      setEvents(eventsData);
+    } catch (error) {
+      console.error('Failed to load club details:', error);
+      setClub(null);
+      setEvents([]);
+    } finally {
       setLoading(false);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [id]);
+    }
+  };
+
+  loadClubDetails();
+}, [id]);
 
   if (loading) return <LoadingState count={3} />;
 
