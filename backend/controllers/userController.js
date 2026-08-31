@@ -1,6 +1,12 @@
 const bcrypt = require("bcryptjs");
 const User = require("../models/User");
 const jwt = require("jsonwebtoken");
+const { OAuth2Client } = require("google-auth-library");
+
+const googleClient = new OAuth2Client(
+    process.env.GOOGLE_CLIENT_ID
+);
+
 
 // Register a new user
 const registerUser = async (req, res) => {
@@ -91,6 +97,13 @@ const loginUser = async (req, res) => {
             });
         }
 
+        // Make sure this user has a password
+        if (!user.password) {
+            return res.status(401).json({
+                message: "This account uses Google Sign-In"
+            });
+        }
+
         // Compare entered password with hashed password
         const isPasswordCorrect = await bcrypt.compare(
             password,
@@ -103,7 +116,7 @@ const loginUser = async (req, res) => {
             });
         }
 
-        // Create JWT
+        // Create CampusPulse JWT
         const token = jwt.sign(
             {
                 userId: user._id,
@@ -137,8 +150,127 @@ const loginUser = async (req, res) => {
 };
 
 
+// Google Login
+const googleLogin = async (req, res) => {
+    try {
+        const { credential } = req.body;
+
+        // Check if Google credential was received
+        if (!credential) {
+            return res.status(400).json({
+                message: "Google credential is required"
+            });
+        }
+
+        // Verify Google ID token
+        const ticket = await googleClient.verifyIdToken({
+            idToken: credential,
+            audience: process.env.GOOGLE_CLIENT_ID
+        });
+
+        const payload = ticket.getPayload();
+
+        if (!payload) {
+            return res.status(401).json({
+                message: "Invalid Google token"
+            });
+        }
+
+        const {
+            sub: googleId,
+            email,
+            name,
+            picture,
+            email_verified
+        } = payload;
+
+        // Make sure Google verified the email
+        if (!email || !email_verified) {
+            return res.status(401).json({
+                message: "Google email could not be verified"
+            });
+        }
+
+        // First: find user using Google ID
+        let user = await User.findOne({ googleId });
+
+        // Second: if Google ID is not linked,
+        // check whether this email already exists
+        if (!user) {
+            user = await User.findOne({ email });
+
+            if (user) {
+                // Link this existing CampusPulse account
+                // to the Google account
+                user.googleId = googleId;
+
+                // Add Google profile picture if one doesn't exist
+                if (!user.profile?.profilePicture && picture) {
+                    user.profile = {
+                        ...(user.profile?.toObject?.() || {}),
+                        profilePicture: picture
+                    };
+                }
+
+                await user.save();
+            }
+        }
+
+        // Third: create a new CampusPulse user
+        if (!user) {
+            user = await User.create({
+                name: name || email.split("@")[0],
+                email,
+                googleId,
+                role: "STUDENT",
+                profile: {
+                    profilePicture: picture || undefined
+                }
+            });
+        }
+
+        // Create CampusPulse JWT
+        const token = jwt.sign(
+            {
+                userId: user._id,
+                role: user.role
+            },
+            process.env.JWT_SECRET,
+            {
+                expiresIn: "1d"
+            }
+        );
+
+        // Send authenticated user back to frontend
+        res.status(200).json({
+            message: "Google login successful",
+            token,
+            user: {
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                studentId: user.studentId,
+                academic: user.academic,
+                interests: user.interests,
+                skills: user.skills,
+                profile: user.profile
+            }
+        });
+
+    } catch (error) {
+        console.error("Google login error:", error);
+
+        res.status(401).json({
+            message: "Google authentication failed"
+        });
+    }
+};
+
+
 // Export controllers
 module.exports = {
     registerUser,
-    loginUser
+    loginUser,
+    googleLogin
 };
