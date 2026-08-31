@@ -1,49 +1,65 @@
 import type { User } from '@/types';
-import { mockUsers } from '@/data/mock/mockUsers';
 
-const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
+const API_URL = 'http://localhost:5000/api/users';
 
 export const authApi = {
-  async login(email: string, password: string): Promise<{ token: string; user: User }> {
-    await delay(600);
-    const user = mockUsers.find((u) => u.email.toLowerCase() === email.toLowerCase());
-    if (!user) throw new Error('No account found with this email.');
-    if (!password) throw new Error('Password is required.');
-    return { token: `mock-jwt-${user.id}`, user };
-  },
+  // Google Login
+  async googleLogin(
+    credential: string,
+  ): Promise<{ token: string; user: User }> {
+    const response = await fetch(`${API_URL}/google`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        credential,
+      }),
+    });
 
-  async register(data: {
-    name: string;
-    email: string;
-    password: string;
-    studentId: string;
-    department: string;
-    year: number;
-    interests: string[];
-    skills: string[];
-  }): Promise<{ token: string; user: User }> {
-    await delay(700);
-    if (mockUsers.some((u) => u.email.toLowerCase() === data.email.toLowerCase())) {
-      throw new Error('An account with this email already exists.');
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Google login failed');
     }
-    const user: User = {
-      id: `u${Date.now()}`,
-      name: data.name,
-      email: data.email,
-      role: 'STUDENT',
-      studentId: data.studentId,
-      academic: { department: data.department, year: data.year },
-      interests: data.interests,
-      skills: data.skills,
-      profile: { bio: '', phone: '' },
+
+    return {
+      token: data.token,
+      user: {
+        ...data.user,
+        id: data.user.id,
+      },
     };
-    return { token: `mock-jwt-${user.id}`, user };
   },
 
-  async getProfile(userId: string): Promise<User> {
-    await delay(300);
-    const user = mockUsers.find((u) => u.id === userId);
-    if (!user) throw new Error('User not found.');
-    return user;
+  // Email / Password Login
+  async login(
+    email: string,
+    password: string,
+  ): Promise<{ token: string; user: User }> {
+    const response = await fetch(`${API_URL}/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email,
+        password,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Login failed');
+    }
+
+    return {
+      token: data.token,
+      user: {
+        ...data.user,
+        id: data.user.id,
+      },
+    };
   },
 };
