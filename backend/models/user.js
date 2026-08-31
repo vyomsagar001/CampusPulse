@@ -16,9 +16,17 @@ const userSchema = new mongoose.Schema(
             trim: true
         },
 
+        // Optional because Google-authenticated users
+        // do not have a CampusPulse password.
         password: {
+            type: String
+        },
+
+        // Google account identifier
+        googleId: {
             type: String,
-            required: true
+            unique: true,
+            sparse: true
         },
 
         role: {
