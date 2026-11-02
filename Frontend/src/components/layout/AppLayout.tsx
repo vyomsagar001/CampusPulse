@@ -1,7 +1,9 @@
+
 import { type ReactNode } from 'react';
 import { Navbar } from './Navbar';
 import { Sidebar } from './Sidebar';
 import { MobileNav } from './MobileNav';
+import { Atticus } from '@/components/Atticus';
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -19,6 +21,7 @@ export function AppLayout({ children, showSidebar = true }: AppLayoutProps) {
         </main>
       </div>
       <MobileNav />
+      <Atticus />
     </div>
   );
 }
@@ -32,6 +35,7 @@ export function PublicLayout({ children }: PublicLayoutProps) {
     <div className="min-h-screen bg-slate-50">
       <Navbar />
       <main>{children}</main>
+      <Atticus />
     </div>
   );
 }
