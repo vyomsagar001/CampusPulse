@@ -18,7 +18,7 @@ import { BlurText } from '@/components/effects/BlurText';
 import { Aurora } from '@/components/effects/Aurora';
 import { SpotlightCard } from '@/components/effects/SpotlightCard';
 import { CardSwap, Card } from '@/components/effects/CardSwap';
-import { mockEvents, mockClubs, mockAnnouncements } from '@/data/mockData';
+import { mockEvents, mockClubs } from '@/data/mockData';
 import { formatDate } from '@/utils/format';
 import type { CampusEvent } from '@/types';
 
@@ -44,7 +44,7 @@ const features = [
   {
     icon: Bell,
     title: 'Stay Updated',
-    description: 'Get important campus announcements and event notifications.',
+    description: 'Get updates about upcoming events and campus activities.',
     color: 'bg-navy-50 text-navy-600',
   },
 ];
@@ -399,7 +399,7 @@ export function LandingPage() {
                 Your campus is always moving. Stay in the loop.
               </h2>
               <p className="mx-auto mt-4 max-w-xl text-lg text-navy-200">
-                Join CampusPulse and never miss an event, workshop, or campus announcement again.
+                Join CampusPulse and never miss an event, workshop, or campus opportunity again.
               </p>
               <div className="mt-8 flex flex-wrap justify-center gap-3">
                 <Link to="/register">

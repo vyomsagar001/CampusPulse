@@ -306,7 +306,7 @@ export function RegisterPage() {
             Be part of the pulse.
           </h2>
           <p className="mt-4 max-w-md text-lg text-navy-200">
-            Register once and get access to every event, club, and announcement on campus — all in one place.
+            Register once and get access to campus events and student clubs — all in one place.
           </p>
           <ul className="mt-8 space-y-3">
             {['Discover and register for events', 'Follow your favorite clubs', 'Get instant notifications', 'Report issues and give feedback'].map((item) => (

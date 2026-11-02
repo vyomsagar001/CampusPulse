@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { CheckCircle2, Bell, AlertCircle, Calendar, Info } from 'lucide-react';
+import { CheckCircle2, Bell, AlertCircle, Calendar } from 'lucide-react';
 import type { AppNotification } from '@/types';
 import { formatRelative } from '@/utils/format';
 
@@ -7,7 +7,6 @@ const typeConfig = {
   REGISTRATION_CONFIRMATION: { icon: CheckCircle2, color: 'text-emerald-600 bg-emerald-50' },
   EVENT_REMINDER: { icon: Calendar, color: 'text-electric-600 bg-electric-50' },
   EVENT_CANCELLATION: { icon: AlertCircle, color: 'text-red-500 bg-red-50' },
-  NEW_ANNOUNCEMENT: { icon: Info, color: 'text-accent-600 bg-accent-50' },
 } as const;
 
 interface NotificationItemProps {

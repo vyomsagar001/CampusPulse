@@ -20,14 +20,6 @@ export const mockNotifications: AppNotification[] = [
     eventId: 'e2',
   },
   {
-    id: 'n3',
-    type: 'NEW_ANNOUNCEMENT',
-    title: 'New announcement',
-    message: 'Mid-semester examinations seating plan has been released.',
-    timestamp: '2026-08-16T10:05:00Z',
-    read: false,
-  },
-  {
     id: 'n4',
     type: 'REGISTRATION_CONFIRMATION',
     title: 'Registration confirmed',

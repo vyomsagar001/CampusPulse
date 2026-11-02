@@ -6,15 +6,12 @@ import {
   Ticket,
   Building2,
   AlertCircle,
-  Megaphone,
   TrendingUp,
-  ArrowRight,
 } from 'lucide-react';
 import { StatCard } from '@/components/ui/StatCard';
 import { Badge, CategoryBadge, StatusBadge } from '@/components/ui/Badge';
-import { AnnouncementCard } from '@/components/AnnouncementCard';
 import { LoadingState } from '@/components/ui/States';
-import { mockUsers, mockClubs, mockEvents, mockRegistrations, mockAnnouncements, mockIssues } from '@/data/mockData';
+import { mockUsers, mockClubs, mockEvents, mockRegistrations, mockIssues } from '@/data/mockData';
 import { formatDate } from '@/utils/format';
 
 export function AdminPage() {
@@ -178,21 +175,6 @@ export function AdminPage() {
               </div>
             ))}
           </div>
-        </div>
-      </div>
-
-      {/* Recent announcements */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-soft">
-        <div className="flex items-center justify-between">
-          <h2 className="font-display text-lg font-bold text-navy-900">Recent Announcements</h2>
-          <Link to="/announcements" className="inline-flex items-center gap-1 text-sm font-semibold text-electric-600 hover:text-electric-700">
-            View all <ArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
-        <div className="mt-4 grid gap-3 sm:grid-cols-2">
-          {mockAnnouncements.slice(0, 4).map((a) => (
-            <AnnouncementCard key={a.id} announcement={a} compact />
-          ))}
         </div>
       </div>
     </div>

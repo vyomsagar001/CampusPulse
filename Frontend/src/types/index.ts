@@ -85,24 +85,10 @@ export interface Registration {
   registeredAt: string;
 }
 
-export type AnnouncementPriority = 'HIGH' | 'MEDIUM' | 'LOW';
-export type AnnouncementCategory = 'IMPORTANT' | 'GENERAL' | 'EVENT';
-
-export interface Announcement {
-  id: string;
-  title: string;
-  description: string;
-  author: string;
-  date: string;
-  priority: AnnouncementPriority;
-  category: AnnouncementCategory;
-}
-
 export type NotificationType =
   | 'REGISTRATION_CONFIRMATION'
   | 'EVENT_REMINDER'
-  | 'EVENT_CANCELLATION'
-  | 'NEW_ANNOUNCEMENT';
+  | 'EVENT_CANCELLATION';
 
 export interface AppNotification {
   id: string;

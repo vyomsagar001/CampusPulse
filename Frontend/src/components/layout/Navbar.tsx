@@ -9,7 +9,6 @@ import type { UserRole } from '@/types';
 const publicLinks = [
   { to: '/events', label: 'Events' },
   { to: '/clubs', label: 'Clubs' },
-  { to: '/announcements', label: 'Announcements' },
 ];
 
 export function Navbar() {

@@ -96,7 +96,7 @@ export function LoginPage() {
             {[
               'Discover and register for campus events',
               'Follow your favorite clubs',
-              'Get instant notifications and announcements',
+              'Get updates about events and campus activities',
             ].map((item) => (
               <li
                 key={item}

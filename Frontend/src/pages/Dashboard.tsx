@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   CalendarDays,
@@ -7,31 +7,50 @@ import {
   Bell,
   ArrowRight,
   Sparkles,
-  TrendingUp,
 } from 'lucide-react';
 import { StatCard } from '@/components/ui/StatCard';
 import { EventCard } from '@/components/EventCard';
-import { AnnouncementCard } from '@/components/AnnouncementCard';
-import { EmptyState, LoadingState } from '@/components/ui/States';
+import { EmptyState, ErrorState, LoadingState } from '@/components/ui/States';
 import { useAuth } from '@/context/AuthContext';
-import { getGreeting, formatDate, formatTime } from '@/utils/format';
-import { mockEvents, mockClubs, mockRegistrations, mockAnnouncements } from '@/data/mockData';
-import type { CampusEvent, Registration } from '@/types';
+import { getGreeting, formatDate } from '@/utils/format';
+import { eventsApi } from '@/api/events';
+import { clubsApi } from '@/api/clubs';
+import { registrationsApi } from '@/api/registrations';
+import type { CampusEvent, Club, Registration } from '@/types';
 
 export function DashboardPage() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [events, setEvents] = useState<CampusEvent[]>([]);
+  const [clubs, setClubs] = useState<Club[]>([]);
   const [registrations, setRegistrations] = useState<Registration[]>([]);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setEvents(mockEvents);
-      setRegistrations(mockRegistrations.filter((r) => r.userId === user?.id));
+  const loadDashboard = useCallback(async () => {
+    setLoading(true);
+    setError(false);
+
+    try {
+      const [eventsData, clubsData, registrationsData] = await Promise.all([
+        eventsApi.getAll(),
+        clubsApi.getAll(),
+        user?.id ? registrationsApi.getByUserId(user.id) : Promise.resolve([]),
+      ]);
+
+      setEvents(eventsData);
+      setClubs(clubsData);
+      setRegistrations(registrationsData);
+    } catch (loadError) {
+      console.error('Failed to load dashboard:', loadError);
+      setError(true);
+    } finally {
       setLoading(false);
-    }, 400);
-    return () => clearTimeout(timer);
+    }
   }, [user?.id]);
+
+  useEffect(() => {
+    void loadDashboard();
+  }, [loadDashboard]);
 
   if (loading) {
     return (
@@ -47,33 +66,41 @@ export function DashboardPage() {
     );
   }
 
-  const upcomingEvents = events
-    .filter((e) => e.status === 'PUBLISHED' && new Date(e.startDate) >= new Date())
+  if (error) {
+    return <ErrorState message="We couldn't load your campus dashboard. Check that the backend is running and try again." onRetry={() => void loadDashboard()} />;
+  }
+
+  const publishedEvents = events.filter((event) => event.status === 'PUBLISHED');
+  const upcomingEvents = publishedEvents
+    .filter((event) => new Date(event.startDate) >= new Date())
     .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
     .slice(0, 4);
 
   const myRegistrations = registrations
-    .map((r) => ({ reg: r, event: events.find((e) => e.id === r.eventId) }))
-    .filter((x) => x.event)
+    .map((registration) => ({
+      reg: registration,
+      event: events.find((event) => event.id === registration.eventId),
+    }))
+    .filter((item) => item.event && item.reg.status !== 'CANCELLED')
     .slice(0, 4);
 
-  const recommendedEvents = events
-    .filter(
-      (e) =>
-        e.status === 'PUBLISHED' &&
-        !registrations.some((r) => r.eventId === e.id),
-    )
-    .filter(
-      (e) =>
-        e.category === 'WORKSHOP' ||
-        (e.category === 'HACKATHON' && user?.interests?.includes('Hackathons')) ||
-        user?.interests?.some((interest) =>
-          e.title.toLowerCase().includes(interest.toLowerCase().split('/')[0]),
-        ),
+  const registeredEventIds = new Set(
+    registrations
+      .filter((registration) => registration.status !== 'CANCELLED')
+      .map((registration) => registration.eventId),
+  );
+
+  const recommendedEvents = publishedEvents
+    .filter((event) => !registeredEventIds.has(event.id))
+    .filter((event) =>
+      event.category === 'WORKSHOP' ||
+      event.category === 'HACKATHON' ||
+      user?.interests?.some((interest) =>
+        event.title.toLowerCase().includes(interest.toLowerCase().split('/')[0]),
+      ),
     )
     .slice(0, 3);
 
-  const recentAnnouncements = mockAnnouncements.slice(0, 3);
   const unreadCount = 3;
 
   return (
@@ -83,9 +110,7 @@ export function DashboardPage() {
         <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-electric-600/20 blur-3xl" />
         <div className="absolute -left-16 -bottom-16 h-48 w-48 rounded-full bg-accent-600/20 blur-3xl" />
         <div className="relative">
-          <p className="text-sm font-semibold text-electric-300">
-            {getGreeting()},
-          </p>
+          <p className="text-sm font-semibold text-electric-300">{getGreeting()},</p>
           <h1 className="mt-1 font-display text-2xl font-bold text-white lg:text-3xl">
             {user?.name?.split(' ')[0] ?? 'there'} 👋
           </h1>
@@ -95,9 +120,9 @@ export function DashboardPage() {
 
       {/* Quick Stats */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Upcoming Events" value={upcomingEvents.length} icon={<CalendarDays className="h-5 w-5" />} color="electric" trend={{ value: '+12%', positive: true }} />
-        <StatCard label="Registered Events" value={registrations.length} icon={<Ticket className="h-5 w-5" />} color="accent" />
-        <StatCard label="Clubs" value={mockClubs.length} icon={<Users className="h-5 w-5" />} color="navy" />
+        <StatCard label="Upcoming Events" value={upcomingEvents.length} icon={<CalendarDays className="h-5 w-5" />} color="electric" />
+        <StatCard label="Registered Events" value={myRegistrations.length} icon={<Ticket className="h-5 w-5" />} color="accent" />
+        <StatCard label="Clubs" value={clubs.length} icon={<Users className="h-5 w-5" />} color="navy" />
         <StatCard label="Notifications" value={unreadCount} icon={<Bell className="h-5 w-5" />} color="emerald" />
       </div>
 
@@ -109,11 +134,17 @@ export function DashboardPage() {
             View all <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
-        <div className="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {upcomingEvents.map((event) => (
-            <EventCard key={event.id} event={event} club={mockClubs.find((c) => c.id === event.club)} />
-          ))}
-        </div>
+        {upcomingEvents.length === 0 ? (
+          <div className="mt-4">
+            <EmptyState title="No upcoming events" message="New campus events will appear here once they are published." />
+          </div>
+        ) : (
+          <div className="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {upcomingEvents.map((event) => (
+              <EventCard key={event.id} event={event} club={clubs.find((club) => club.id === event.club)} />
+            ))}
+          </div>
+        )}
       </section>
 
       {/* My Registrations */}
@@ -165,35 +196,27 @@ export function DashboardPage() {
         </div>
       </section>
 
-      {/* Recommended + Announcements */}
-      <div className="grid gap-8 lg:grid-cols-3">
-        <section className="lg:col-span-2">
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-accent-500" />
-            <h2 className="font-display text-xl font-bold text-navy-900">Recommended for You</h2>
+      {/* Recommended Events */}
+      <section>
+        <div className="flex items-center gap-2">
+          <Sparkles className="h-5 w-5 text-accent-500" />
+          <h2 className="font-display text-xl font-bold text-navy-900">Recommended for You</h2>
+        </div>
+        <p className="mt-1 text-sm text-slate-500">
+          {user?.interests?.length ? `Based on your interests in ${user.interests.slice(0, 3).join(', ')}` : 'Explore events selected from your campus activities'}
+        </p>
+        {recommendedEvents.length === 0 ? (
+          <div className="mt-4">
+            <EmptyState title="No recommendations yet" message="More events will appear here as clubs publish their activities." />
           </div>
-          <p className="mt-1 text-sm text-slate-500">Based on your interests in {user?.interests?.slice(0, 3).join(', ')}</p>
-          <div className="mt-4 grid gap-5 sm:grid-cols-2">
+        ) : (
+          <div className="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {recommendedEvents.map((event) => (
-              <EventCard key={event.id} event={event} club={mockClubs.find((c) => c.id === event.club)} />
+              <EventCard key={event.id} event={event} club={clubs.find((club) => club.id === event.club)} />
             ))}
           </div>
-        </section>
-
-        <section>
-          <div className="flex items-center justify-between gap-4">
-            <h2 className="font-display text-xl font-bold text-navy-900">Announcements</h2>
-            <Link to="/announcements" className="text-sm font-semibold text-electric-600 hover:text-electric-700">
-              All
-            </Link>
-          </div>
-          <div className="mt-4 space-y-3">
-            {recentAnnouncements.map((a) => (
-              <AnnouncementCard key={a.id} announcement={a} compact />
-            ))}
-          </div>
-        </section>
-      </div>
+        )}
+      </section>
     </div>
   );
 }

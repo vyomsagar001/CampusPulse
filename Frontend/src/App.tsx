@@ -13,7 +13,6 @@ import { ClubsPage } from '@/pages/Clubs';
 import { ClubDetailsPage } from '@/pages/ClubDetails';
 import { ClubAdminPage } from '@/pages/ClubAdmin';
 import { AdminPage } from '@/pages/Admin';
-import { AnnouncementsPage } from '@/pages/Announcements';
 import { NotificationsPage } from '@/pages/Notifications';
 import { IssuesPage } from '@/pages/Issues';
 import { ProfilePage } from '@/pages/Profile';
@@ -36,7 +35,6 @@ function AppRoutes() {
       <Route path="/events/:id" element={<PublicLayout><EventDetailsPage /></PublicLayout>} />
       <Route path="/clubs" element={<PublicLayout><ClubsPage /></PublicLayout>} />
       <Route path="/clubs/:id" element={<PublicLayout><ClubDetailsPage /></PublicLayout>} />
-      <Route path="/announcements" element={<PublicLayout><AnnouncementsPage /></PublicLayout>} />
 
       <Route path="/dashboard" element={<ProtectedRoute><AppLayout><DashboardPage /></AppLayout></ProtectedRoute>} />
       <Route path="/notifications" element={<ProtectedRoute><AppLayout><NotificationsPage /></AppLayout></ProtectedRoute>} />
